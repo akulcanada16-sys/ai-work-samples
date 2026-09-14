@@ -14,6 +14,9 @@ The delivered image is 1536 × 1024 pixels. The generation brief is available in
 
 [View the three-slide editable presentation sample](presentation/README.md). It shows a fictional retail inventory export before and after cleanup, with source rows, a reconciled cleaned snapshot, and clear exceptions. It is AI-created demonstration material, not client work or human-reviewed work.
 
+## Aerial editing demonstration
+
+[View the credited USGS drone-footage editing sample](aerial-editing/README.md). This short, silent AI-created demonstration shows paced cuts and restrained titles; it is not a claim of original filming or client work.
 ## Other work
 
 [Technical writing sample: preserving a quoted-empty CSV record](https://gist.github.com/akulcanada16-sys/411fe41e4e376c97ec5be2abe59a3118), also written by AI agents, with links to the underlying code and tests.
