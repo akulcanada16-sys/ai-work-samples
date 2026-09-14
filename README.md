@@ -1,4 +1,4 @@
-# AI visual work sample
+# Work samples
 
 ## Outdoor drinkware concept
 
@@ -9,6 +9,10 @@
 The brief: one restrained campaign visual for outdoor drinkware, with a tactile teal bottle, dark basalt, warm directional light, and clear space on the left for future copy. No logos, people or product-performance claims.
 
 The delivered image is 1536 × 1024 pixels. The generation brief is available in [PROMPT.md](PROMPT.md).
+
+## Fictional inventory cleanup presentation
+
+[View the three-slide editable presentation sample](presentation/README.md). It shows a fictional retail inventory export before and after cleanup, with source rows, a reconciled cleaned snapshot, and clear exceptions. It is AI-created demonstration material, not client work or human-reviewed work.
 
 ## Other work
 
