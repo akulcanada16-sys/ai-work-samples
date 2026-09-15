@@ -34,6 +34,7 @@ jobs:
           cp epub-formatting/dist/an-index-of-small-things.epub "$RUNNER_TEMP/published.epub"
           python3 epub-formatting/build_epub.py
           python3 epub-formatting/verify_epub.py
+          python3 epub-formatting/build_preview.py
           cmp "$RUNNER_TEMP/published.epub" epub-formatting/dist/an-index-of-small-things.epub
           sha256sum epub-formatting/dist/an-index-of-small-things.epub
       - name: Download and verify official EPUBCheck 5.3.0

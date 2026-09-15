@@ -23,7 +23,7 @@ jobs:
       - name: Start pinned official IRIS Community Edition
         run: docker run -d --name iris -p 127.0.0.1:52773:52773 "$IRIS_IMAGE"
       - name: Wait for IRIS web server
-        run: for i in {1..60}; do curl --fail --silent http://localhost:52773/csp/sys/UtilHome.csp && exit 0; sleep 5; done; exit 1
+        run: for i in {1..60}; do curl --fail --silent --output /dev/null http://localhost:52773/csp/sys/UtilHome.csp && exit 0; sleep 5; done; exit 1
       - name: Configure a dedicated CSP static application and diagnose its page
         run: |
           # /csp/task-timeline is configured below; its physical path is explicit.

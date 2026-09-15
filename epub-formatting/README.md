@@ -8,8 +8,10 @@ It is a formatting sample, not client work, a published book, or a claim of reta
 
 - `source/` — editable EPUB source: XHTML, CSS, package document, navigation document, and container metadata.
 - `build_epub.py` — deterministic standard-library build script.
+- `build_preview.py` — standard-library generator for the browser reading preview.
 - `dist/an-index-of-small-things.epub` — generated EPUB artifact.
-- `preview/index.html` — browser landing page linking directly to the three chapter XHTML files.
+- `preview/index.html` — browser landing page linking to the preview options.
+- `preview/reading-preview.html` — generated, ordinary-HTML reading preview containing the same three chapters, navigation, table, and linked note as the EPUB source.
 - `verify_epub.py` — local structural inspection; it is not a replacement for EPUBCheck.
 
 ## Build and inspect
@@ -21,7 +23,7 @@ python build_epub.py
 python verify_epub.py
 ```
 
-The build writes `mimetype` first in the archive without ZIP compression, then writes the remaining files in a fixed sorted order and timestamp. This follows the EPUB Open Container Format packaging rule for the `mimetype` file. The source includes the required `META-INF/container.xml`, package document, manifest, spine, and EPUB3 navigation document.
+The build writes `mimetype` first in the archive without ZIP compression, then writes the remaining files in a fixed sorted order and timestamp. This follows the EPUB Open Container Format packaging rule for the `mimetype` file. The small sample stores its other entries too, avoiding compression-library differences so an Ubuntu rebuild can be compared byte-for-byte with the committed EPUB. The source includes the required `META-INF/container.xml`, package document, manifest, spine, and EPUB3 navigation document.
 
 `verify_epub.py` checks the resulting archive order and compression, required package files, XML well-formedness, manifest resources, spine references, navigation targets, and the linked note target. It does not claim full EPUB conformance.
 
@@ -35,7 +37,8 @@ The packaging requirements used here are documented in the W3C [EPUB Open Contai
 
 ## Inspection notes
 
-- Open `preview/index.html` in a browser to inspect the source chapter XHTML without an ebook reader.
+- Run `python build_preview.py`, then open `preview/reading-preview.html` in a browser to inspect a standard-HTML reading preview without an ebook reader.
+- The direct XHTML links remain available from `preview/index.html` as an editable-source inspection path; the generated HTML preview is the ordinary browser reading path.
 - The table in Chapter Two is fictional research-card content, included only to demonstrate accessible table markup.
 - The linked note in Chapter Three is a fictional editorial note. It is not a source citation.
 - The e-book is intentionally reflowable and uses only system font families; no fixed-layout or device-specific behavior is claimed.

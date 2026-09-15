@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from zipfile import ZIP_DEFLATED, ZIP_STORED, ZipFile, ZipInfo
+from zipfile import ZIP_STORED, ZipFile, ZipInfo
 
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / "source"
@@ -25,7 +25,9 @@ def build() -> Path:
         book.writestr(archive_info("mimetype", ZIP_STORED), (SOURCE / "mimetype").read_text(encoding="ascii").strip().encode("ascii"))
         for path in files:
             name = path.relative_to(SOURCE).as_posix()
-            book.writestr(archive_info(name, ZIP_DEFLATED), path.read_bytes())
+            # The sample is tiny. Storing each entry avoids zlib-version-dependent
+            # bytes, so an Ubuntu CI rebuild can be compared to the committed EPUB.
+            book.writestr(archive_info(name, ZIP_STORED), path.read_bytes())
     return OUTPUT
 
 
