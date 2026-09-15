@@ -1,0 +1,46 @@
+name: Ephemeral IRIS 2026.2 integration
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'outreach/iris-task-timeline/**'
+      - '.github/workflows/iris-task-timeline.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Docker Hub's 2026.2 linux-amd64 image digest, checked 2026-09-15.
+      IRIS_IMAGE: intersystems/iris-community@sha256:d4331089a4d19aafa867c26b343eb2b8486cf112ef1522132761e6327691377e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: Run offline contract checks
+        run: node --test outreach/iris-task-timeline/test/*.test.js
+      - name: Start pinned official IRIS Community Edition
+        run: docker run -d --name iris -p 127.0.0.1:52773:52773 "$IRIS_IMAGE"
+      - name: Wait for IRIS web server
+        run: for i in {1..60}; do curl --fail --silent http://localhost:52773/csp/sys/UtilHome.csp && exit 0; sleep 5; done; exit 1
+      - name: Install the static CSP sample and verify fictional fixture only
+        run: |
+          docker exec iris mkdir -p /usr/irissys/csp/samples/task-timeline
+          docker cp outreach/iris-task-timeline/. iris:/usr/irissys/csp/samples/task-timeline/
+          docker exec iris sh /usr/irissys/csp/samples/task-timeline/integration/seed-safe-fixtures.sh
+          curl --fail --silent http://localhost:52773/csp/samples/task-timeline/index.html | grep -F "Task Failure Timeline"
+      - name: Verify documented response wrappers and field shapes
+        run: |
+          token="$(curl --fail --silent --show-error -X POST http://localhost:52773/api/admin/login -H 'Content-Type: application/json' --data '{"user":"_SYSTEM","password":"SYS"}' | jq -r '.result.access_token')"
+          test -n "$token" && test "$token" != null
+          auth="Authorization: Bearer $token"
+          for path in 'v2/tasks' 'v2/task/history?maxRows=100' 'v2/task/upcoming?hoursOffset=168'; do curl --fail --silent -H "$auth" "http://localhost:52773/api/admin/$path" | jq -e '.result | arrays' >/dev/null; done
+      - name: Browser smoke test against the ephemeral IRIS page
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+          node outreach/iris-task-timeline/integration/browser-smoke.mjs
+      - name: Tear down ephemeral database
+        if: always()
+        run: docker rm -f iris
