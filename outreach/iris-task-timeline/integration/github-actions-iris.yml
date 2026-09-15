@@ -30,7 +30,19 @@ jobs:
           docker exec iris mkdir -p /usr/irissys/csp/task-timeline
           docker cp outreach/iris-task-timeline/. iris:/usr/irissys/csp/task-timeline/
           docker exec iris sh /usr/irissys/csp/task-timeline/integration/seed-safe-fixtures.sh
-          docker exec -i iris iris session IRIS < outreach/iris-task-timeline/integration/configure-static-csp.iris
+          terminal_output="$(mktemp)"
+          set +e
+          docker exec -i iris iris terminal IRIS < outreach/iris-task-timeline/integration/configure-static-csp.iris > "$terminal_output" 2>&1
+          terminal_status=$?
+          set -e
+          if [ "$terminal_status" -ne 0 ]; then
+            printf 'IRIS terminal invocation exited %s. Limited diagnostics follow.\n' "$terminal_status"
+            sed -n '1,80p' "$terminal_output"
+            docker inspect --format 'Container state: status={{.State.Status}} running={{.State.Running}} exitCode={{.State.ExitCode}} startedAt={{.State.StartedAt}}' iris
+            docker exec iris iris qlist IRIS || true
+            exit "$terminal_status"
+          fi
+          cat "$terminal_output"
           docker exec iris sh -c 'printf "Mapped directory: /usr/irissys/csp/task-timeline\nExpected: directory must be searchable/readable and static files readable by the IRIS web-server process.\nActual directory and file permissions:\n"; ls -ld /usr/irissys/csp/task-timeline; stat -c "%A %U:%G %n" /usr/irissys/csp/task-timeline/index.html /usr/irissys/csp/task-timeline/src/app.js'
           response_file="$(mktemp)"
           headers_file="$(mktemp)"
