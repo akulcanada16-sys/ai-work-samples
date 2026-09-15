@@ -1,4 +1,44 @@
 zn "%SYS"
+
+kill account
+set status=##class(Security.Users).Get("_SYSTEM",.account)
+if $system.Status.IsError(status) write "AUTH_DIAG _SYSTEM get failed: ",$system.Status.GetErrorText(status),!
+if '$system.Status.IsError(status) write "AUTH_DIAG user=_SYSTEM enabled=",account("Enabled")," changePassword=",account("ChangePassword")," roles=",account("Roles"),!
+
+kill account
+set status=##class(Security.Users).Get("SuperUser",.account)
+if $system.Status.IsError(status) write "AUTH_DIAG SuperUser get failed: ",$system.Status.GetErrorText(status),!
+if '$system.Status.IsError(status) write "AUTH_DIAG user=SuperUser enabled=",account("Enabled")," changePassword=",account("ChangePassword")," roles=",account("Roles"),!
+
+kill api
+set status=##class(Security.Applications).Get("/api/admin",.api)
+if $system.Status.IsError(status) write "AUTH_CONFIG_ERROR /api/admin get failed: ",$system.Status.GetErrorText(status),!
+if $system.Status.IsError(status) halt
+write "AUTH_DIAG app=/api/admin enabled=",api("Enabled")," jwt=",api("JWTAuthEnabled")," authBits=",api("AutheEnabled")," dispatch=",api("DispatchClass"),!
+
+set password=$system.Util.GetEnviron("IRIS_TEST_PASSWORD")
+if password="" write "AUTH_CONFIG_ERROR missing generated password",!
+if password="" halt
+kill testUser
+set testUser("Roles")="%Operator"
+set testUser("Password")=password
+set testUser("FullName")="Ephemeral task-timeline CI account"
+set testUser("ChangePassword")=0
+set testUser("Enabled")=1
+set testUser("AccountNeverExpires")=1
+set testUser("PasswordNeverExpires")=1
+set testUser("Comment")="Created only inside the disposable GitHub Actions container"
+set status=##class(Security.Users).Create("TaskTimelineCI",.testUser)
+set password=""
+if $system.Status.IsError(status) write "AUTH_CONFIG_ERROR test user creation failed: ",$system.Status.GetErrorText(status),!
+if $system.Status.IsError(status) halt
+
+kill account
+set status=##class(Security.Users).Get("TaskTimelineCI",.account)
+if $system.Status.IsError(status) write "AUTH_CONFIG_ERROR test user lookup failed: ",$system.Status.GetErrorText(status),!
+if $system.Status.IsError(status) halt
+write "AUTH_DIAG user=TaskTimelineCI enabled=",account("Enabled")," changePassword=",account("ChangePassword")," roles=",account("Roles"),!
+
 set properties("NameSpace")="USER"
 set properties("Description")="Ephemeral Task Failure Timeline static-page smoke test"
 set properties("Path")="/usr/irissys/csp/task-timeline"
@@ -6,8 +46,11 @@ set properties("ServeFiles")=1
 set properties("Recurse")=1
 set properties("Enabled")=1
 set status=##class(Security.Applications).Create("/csp/task-timeline",.properties)
-if $system.Status.IsError(status) { write "CSP application creation failed: ",$system.Status.GetErrorText(status),! halt 1 }
+if $system.Status.IsError(status) write "CSP_CONFIG_ERROR application creation failed: ",$system.Status.GetErrorText(status),!
+if $system.Status.IsError(status) halt
 set application=##class(Security.Applications).%OpenId("/csp/task-timeline")
-if '$isobject(application) { write "CSP application lookup failed",! halt 1 }
+if '$isobject(application) write "CSP_CONFIG_ERROR application lookup failed",!
+if '$isobject(application) halt
 write "CSP mapping URL=",application.Name," physicalPath=",application.Path," serveFiles=",application.ServeFiles," recurse=",application.Recurse,!
+write "IRIS_CONFIG_OK",!
 halt

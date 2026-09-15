@@ -20,6 +20,12 @@ jobs:
         with: { node-version: 24 }
       - name: Run offline contract checks
         run: node --test outreach/iris-task-timeline/test/*.test.js
+      - name: Generate disposable IRIS test credentials
+        run: |
+          password="Tt$(openssl rand -hex 24)"
+          echo "::add-mask::$password"
+          printf 'IRIS_TEST_USER=%s\n' 'TaskTimelineCI' >> "$GITHUB_ENV"
+          printf 'IRIS_TEST_PASSWORD=%s\n' "$password" >> "$GITHUB_ENV"
       - name: Start pinned official IRIS Community Edition
         run: docker run -d --name iris -p 127.0.0.1:52773:52773 "$IRIS_IMAGE"
       - name: Wait for IRIS web server
@@ -32,7 +38,7 @@ jobs:
           docker exec iris sh /usr/irissys/csp/task-timeline/integration/seed-safe-fixtures.sh
           terminal_output="$(mktemp)"
           set +e
-          docker exec -i iris iris terminal IRIS < outreach/iris-task-timeline/integration/configure-static-csp.iris > "$terminal_output" 2>&1
+          docker exec -e IRIS_TEST_PASSWORD="$IRIS_TEST_PASSWORD" -i iris iris terminal IRIS < outreach/iris-task-timeline/integration/configure-static-csp.iris > "$terminal_output" 2>&1
           terminal_status=$?
           set -e
           if [ "$terminal_status" -ne 0 ]; then
@@ -41,6 +47,16 @@ jobs:
             docker inspect --format 'Container state: status={{.State.Status}} running={{.State.Running}} exitCode={{.State.ExitCode}} startedAt={{.State.StartedAt}}' iris
             docker exec iris iris qlist IRIS || true
             exit "$terminal_status"
+          fi
+          if grep -q '<SYNTAX>' "$terminal_output"; then
+            printf '%s\n' 'IRIS terminal reported an ObjectScript syntax error:'
+            sed -n '1,160p' "$terminal_output"
+            exit 1
+          fi
+          if [ "$(grep -Fxc 'IRIS_CONFIG_OK' "$terminal_output")" -ne 1 ]; then
+            printf '%s\n' 'IRIS configuration did not emit exactly one success sentinel:'
+            sed -n '1,160p' "$terminal_output"
+            exit 1
           fi
           cat "$terminal_output"
           docker exec iris sh -c 'printf "Mapped directory: /usr/irissys/csp/task-timeline\nExpected: directory must be searchable/readable and static files readable by the IRIS web-server process.\nActual directory and file permissions:\n"; ls -ld /usr/irissys/csp/task-timeline; stat -c "%A %U:%G %n" /usr/irissys/csp/task-timeline/index.html /usr/irissys/csp/task-timeline/src/app.js'
@@ -65,8 +81,19 @@ jobs:
           grep -F "Task Failure Timeline" "$response_file"
       - name: Verify documented response wrappers and field shapes
         run: |
-          token="$(curl --fail --silent --show-error -X POST http://localhost:52773/api/admin/login -H 'Content-Type: application/json' --data '{"user":"_SYSTEM","password":"SYS"}' | jq -r '.result.access_token')"
-          test -n "$token" && test "$token" != null
+          login_body="$(mktemp)"
+          login_status="$(curl --silent --show-error --output "$login_body" --write-out '%{http_code}' -X POST http://localhost:52773/api/admin/login -H 'Content-Type: application/json' --data "{\"user\":\"$IRIS_TEST_USER\",\"password\":\"$IRIS_TEST_PASSWORD\"}")"
+          printf 'API login HTTP status=%s\n' "$login_status"
+          if [ "$login_status" != 200 ]; then
+            if jq -e . "$login_body" >/dev/null 2>&1; then
+              jq -c 'def field($name): .[$name] as $value | if ($value | type) == "string" or ($value | type) == "number" or ($value | type) == "boolean" then $value else null end; {status: field("status"), code: field("code"), error: field("error"), message: field("message"), detail: field("detail")} | with_entries(select(.value != null))' "$login_body"
+            else
+              printf '%s\n' 'API login failure body was not JSON (body suppressed).'
+            fi
+            exit 1
+          fi
+          token="$(jq -er '.result.access_token | select(type == "string" and length > 0)' "$login_body")"
+          echo "::add-mask::$token"
           auth="Authorization: Bearer $token"
           for path in 'v2/tasks' 'v2/task/history?maxRows=100' 'v2/task/upcoming?hoursOffset=168'; do curl --fail --silent -H "$auth" "http://localhost:52773/api/admin/$path" | jq -e '.result | arrays' >/dev/null; done
       - name: Browser smoke test against the ephemeral IRIS page
