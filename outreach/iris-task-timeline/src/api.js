@@ -24,15 +24,22 @@ function messageFor(status) {
   if (status === 403) return new ApiError("FORBIDDEN", "This account does not have permission to view this task data.");
   return new ApiError("REQUEST", `Request failed (${status}).`);
 }
+function loginAccessToken(payload) {
+  for (const token of [payload?.result?.access_token, payload?.access_token]) {
+    if (typeof token === "string" && token.trim() !== "") return token;
+  }
+  return null;
+}
 
 export function createApiClient(fetchImpl = fetch, locationLike = globalThis.location) {
   let accessToken = null;
   async function login(user, password) {
+    accessToken = null;
     if (!isSafeOrigin(locationLike)) throw new ApiError("ORIGIN", "Sign-in is allowed only on HTTPS or a local development address.");
     const response = await fetchImpl(`${API_BASE}${ENDPOINTS.login}`, { method: "POST", credentials: "same-origin", headers: { Accept: "application/json", "Content-Type": "application/json" }, body: JSON.stringify({ user, password }) });
     if (!response.ok) throw messageFor(response.status);
-    const payload = await response.json(); const token = payload?.result?.access_token;
-    if (typeof token !== "string" || token.trim() === "") throw new ApiError("CONTRACT", "The server did not return a usable access token.");
+    const token = loginAccessToken(await response.json());
+    if (!token) throw new ApiError("CONTRACT", "The server did not return a usable access token.");
     accessToken = token;
   }
   async function get(path, query) {

@@ -2,11 +2,11 @@
 
 An original, dependency-free, read-only interface for the InterSystems management-portal contest. It turns documented task history into a compact sequence of recent runs, flags only records with a non-zero documented `ErrNumber`, preserves raw server timestamps, and shows the next scheduled run and suspended state.
 
-**Experimental candidate:** The fictional browser demo and local contract checks have passed. Real IRIS compatibility has not yet been verified, and this is not a submitted or accepted contest entry.
+**Experimental candidate:** The fictional browser demo and local contract checks have passed. A disposable IRIS 2026.2 Actions run verified static serving and the login response shape; protected task reads and browser sign-in have not yet completed, so real IRIS compatibility is not yet fully verified. This is not a submitted or accepted contest entry.
 
 ## Use it now
 
-Open `index.html?demo=1` in a modern browser for a fully fictional offline demo. It makes no server request. The normal page must be served from the same InterSystems IRIS origin. It signs in directly to the documented same-origin `/api/admin/login` endpoint, holds only the documented `access_token` in page memory, clears the password input immediately, and sends that access token as a Bearer token for reads. It does not store credentials or tokens in browser storage, URLs, logs, or a proxy. Local sign-out removes the token from page memory.
+Open `index.html?demo=1` in a modern browser for a fully fictional offline demo. It makes no server request. The normal page must be served from the same InterSystems IRIS origin. It signs in directly to the documented same-origin `/api/admin/login` endpoint, holds the `access_token` in page memory, clears the password input immediately, and sends that access token as a Bearer token for reads. It accepts the specification’s `result.access_token` response and the root-level `access_token` observed from the pinned IRIS 2026.2 Community Edition image in Actions run 35032336458; it does not refresh tokens. It does not store credentials or tokens in browser storage, URLs, logs, or a proxy. Local sign-out removes the token from page memory.
 
 The request allowlist is fixed in `src/api.js`: `/api/admin/v2/tasks`, `/api/admin/v2/task/history`, and `/api/admin/v2/task/upcoming`. The `/api/admin` same-origin base comes from the organizer-linked specification. All operational requests use `GET` and limit history/upcoming requests to 100 rows. Authentication is the sole `POST` exception and does not mutate IRIS administration data.
 

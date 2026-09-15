@@ -21,11 +21,29 @@ test("preserves raw timestamp and does not invent timezone", () => { const times
 test("normalizes only literal boolean suspended values and preserves unknown", () => { assert.equal(normalizeUpcoming([{ Id: 1, Suspended: "true" }, { Id: 2, Suspended: true }])[0].suspended, null); assert.equal(normalizeUpcoming([{ Id: 2, Suspended: true }])[0].suspended, true); assert.equal(normalizeUpcoming([{ Id: 3, Suspended: false }])[0].suspended, false); });
 test("enforces read allowlist and encodes hostile text", () => { assert.equal(allowedRequest(ENDPOINTS.history, { filter: "<script>" }), "/api/admin/v2/task/history?filter=%3Cscript%3E"); assert.throws(() => allowedRequest("/v2/task/run"), ApiError); });
 test("rejects remote non-HTTPS sign-in origins while allowing HTTPS and local development", () => { assert.equal(isSafeOrigin({ protocol: "http:", hostname: "example.test" }), false); assert.equal(isSafeOrigin({ protocol: "https:", hostname: "example.test" }), true); assert.equal(isSafeOrigin({ protocol: "http:", hostname: "localhost" }), true); });
-test("uses documented access_token transiently and operational requests are GET Bearer calls", async () => {
-  const calls = []; const client = createApiClient(async (url, options) => { calls.push({ url, options }); return { ok: true, status: 200, json: async () => url.endsWith("/login") ? { result: { access_token: "short-token", refresh_token: "ignored" } } : { result: [] } }; }, { protocol: "https:", hostname: "example.test" });
+test("uses wrapped or observed root access_token transiently and operational requests are GET Bearer calls", async () => {
+  const calls = []; const client = createApiClient(async (url, options) => { calls.push({ url, options }); return { ok: true, status: 200, json: async () => url.endsWith("/login") ? { access_token: "short-token", refresh_token: "ignored" } : { result: [] } }; }, { protocol: "https:", hostname: "example.test" });
   await client.login("reader", "password"); await client.tasks('<img src=x>');
   assert.equal(calls[0].options.method, "POST"); assert.equal(calls[1].options.method, "GET"); assert.equal(calls[1].options.headers.Authorization, "Bearer short-token"); assert.match(calls[1].url, /%3Cimg/);
   client.logout(); assert.equal(client.signedIn(), false); await assert.rejects(client.tasks(), error => error.code === "UNAUTHENTICATED");
+});
+test("accepts documented wrapped login token and clears a prior token on invalid retry", async () => {
+  let loginAttempt = 0;
+  const client = createApiClient(async (url) => ({ ok: true, status: 200, json: async () => {
+    if (!url.endsWith("/login")) return { result: [] };
+    loginAttempt += 1;
+    return loginAttempt === 1 ? { result: { access_token: "wrapped-token" } } : { access_token: " " };
+  } }), { protocol: "https:", hostname: "example.test" });
+  await client.login("reader", "password");
+  await assert.rejects(client.login("reader", "retry"), error => error.code === "CONTRACT");
+  assert.equal(client.signedIn(), false);
+  await assert.rejects(client.tasks(), error => error.code === "UNAUTHENTICATED");
+});
+test("rejects absent, non-string, and blank login token values", async () => {
+  for (const payload of [{}, { access_token: null }, { access_token: 7 }, { access_token: "" }, { result: { access_token: "   " } }]) {
+    const client = createApiClient(async () => ({ ok: true, status: 200, json: async () => payload }), { protocol: "https:", hostname: "example.test" });
+    await assert.rejects(client.login("reader", "password"), error => error.code === "CONTRACT");
+  }
 });
 test("reports missing wrappers and 401/403 states", async () => {
   let call = 0; const client = createApiClient(async () => ({ ok: true, status: 200, json: async () => call++ === 0 ? { result: { access_token: "t" } } : {} }), { protocol: "https:", hostname: "test" }); await client.login("u", "p"); await assert.rejects(client.tasks(), error => error.code === "CONTRACT");
