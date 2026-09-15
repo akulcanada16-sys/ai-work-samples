@@ -36,6 +36,7 @@ def render(element: ET.Element, chapter_id: str) -> str:
 
 def build() -> Path:
     css = (EPUB / "styles" / "book.css").read_text(encoding="utf-8")
+    css += "\nbody { max-width: 48rem; margin: 2rem auto; padding: 0 1.25rem; font-size: 1.125rem; line-height: 1.65; }\n"
     chapters = [
         ("chapter-01.xhtml", "chapter-01", "I. The Drawer"),
         ("chapter-02.xhtml", "chapter-02", "II. The Cards"),

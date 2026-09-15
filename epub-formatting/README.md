@@ -29,7 +29,18 @@ The build writes `mimetype` first in the archive without ZIP compression, then w
 
 ## Validation status
 
-The official validator is [EPUBCheck](https://www.w3.org/publishing/epubcheck/), a W3C project maintained by the DAISY Consortium. EPUBCheck 5.3.0 is the current production release listed by its official release notes and supports EPUB 3.3. It was not available in this workspace because a Java runtime and EPUBCheck distribution were not installed, so this sample has **not** been fully EPUBCheck-validated here. Run its official command against `dist/an-index-of-small-things.epub` before any distribution claim.
+The official validator is [EPUBCheck](https://www.w3.org/publishing/epubcheck/), a W3C project maintained by the DAISY Consortium. EPUBCheck 5.3.0 is the current production release listed by its official release notes and supports EPUB 3.3.
+
+The public [GitHub Actions validation run 35030516318](https://github.com/akulcanada16-sys/ai-work-samples/actions/runs/35030516318) passed on 2026-09-15 for commit `9dac5447c288d33575eb79b07b0265288935f5a9`. It rebuilt the EPUB, confirmed its SHA-256 as `5e2796e5a4ffa6844320f0dd693e503c45e3dd542ee6ab04f7aea192b268d493`, verified the pinned EPUBCheck release archive, and reported:
+
+```text
+Validating using EPUB version 3.3 rules.
+No errors or warnings detected.
+Messages: 0 fatals / 0 errors / 0 warnings / 0 infos
+EPUBCheck completed
+```
+
+This validates the packaged EPUB against EPUBCheck’s EPUB 3.3 rules. It does not claim testing in any particular ebook reader, device, store, or distribution service.
 
 `integration/github-actions-epubcheck.yml` is an inactive template for the public repository. It downloads the official [EPUBCheck 5.3.0 release ZIP](https://github.com/w3c/epubcheck/releases/download/v5.3.0/epubcheck-5.3.0.zip), verifies SHA-256 `6c07e68584b2e2ce2f89fe06e1246dfead3eb36b46b340e7d93524f29dcff6c5`, builds this sample, runs the local structural check, and runs EPUBCheck with warnings treated as failures. The hash was calculated from that official release asset on 2026-09-15; the release page did not publish a separate checksum file. The template is not an executed validation result.
 
