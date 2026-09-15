@@ -1,0 +1,7 @@
+@charset "UTF-8";
+body { font-family: Georgia, "Times New Roman", serif; line-height: 1.55; margin: 5%; color: #20242a; }
+h1 { font-size: 1.7em; margin: 1.8em 0 0.8em; } h2 { font-size: 1.1em; margin-top: 1.4em; }
+p { margin: 0 0 0.9em; } .title-page { text-align: center; padding-top: 22%; } .subtitle { font-style: italic; }
+table { border-collapse: collapse; margin: 1.2em auto; width: 100%; } th, td { border: 1px solid #8b929c; padding: 0.45em; text-align: left; }
+th { background: #edf1f4; } aside { border-left: 0.25em solid #7b5b3e; margin: 1.4em 0; padding-left: 0.8em; }
+a { color: #284f6b; } .return { font-size: 0.9em; }
