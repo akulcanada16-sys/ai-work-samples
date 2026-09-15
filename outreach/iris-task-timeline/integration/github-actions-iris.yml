@@ -24,12 +24,33 @@ jobs:
         run: docker run -d --name iris -p 127.0.0.1:52773:52773 "$IRIS_IMAGE"
       - name: Wait for IRIS web server
         run: for i in {1..60}; do curl --fail --silent http://localhost:52773/csp/sys/UtilHome.csp && exit 0; sleep 5; done; exit 1
-      - name: Install the static CSP sample and verify fictional fixture only
+      - name: Configure a dedicated CSP static application and diagnose its page
         run: |
-          docker exec iris mkdir -p /usr/irissys/csp/samples/task-timeline
-          docker cp outreach/iris-task-timeline/. iris:/usr/irissys/csp/samples/task-timeline/
-          docker exec iris sh /usr/irissys/csp/samples/task-timeline/integration/seed-safe-fixtures.sh
-          curl --fail --silent http://localhost:52773/csp/samples/task-timeline/index.html | grep -F "Task Failure Timeline"
+          # /csp/task-timeline is configured below; its physical path is explicit.
+          docker exec iris mkdir -p /usr/irissys/csp/task-timeline
+          docker cp outreach/iris-task-timeline/. iris:/usr/irissys/csp/task-timeline/
+          docker exec iris sh /usr/irissys/csp/task-timeline/integration/seed-safe-fixtures.sh
+          docker exec -i iris iris session IRIS < outreach/iris-task-timeline/integration/configure-static-csp.iris
+          docker exec iris sh -c 'printf "Mapped directory: /usr/irissys/csp/task-timeline\nExpected: directory must be searchable/readable and static files readable by the IRIS web-server process.\nActual directory and file permissions:\n"; ls -ld /usr/irissys/csp/task-timeline; stat -c "%A %U:%G %n" /usr/irissys/csp/task-timeline/index.html /usr/irissys/csp/task-timeline/src/app.js'
+          response_file="$(mktemp)"
+          headers_file="$(mktemp)"
+          metadata_file="$(mktemp)"
+          set +e
+          curl --silent --show-error --output "$response_file" --dump-header "$headers_file" --write-out '%{http_code}\n%{content_type}\n' http://localhost:52773/csp/task-timeline/index.html > "$metadata_file"
+          curl_status=$?
+          set -e
+          http_status="$(sed -n '1p' "$metadata_file")"
+          content_type="$(sed -n '2p' "$metadata_file")"
+          redirect_path="$(awk 'BEGIN { IGNORECASE=1 } /^location:/ { value=$0; sub(/^[^:]*:[[:space:]]*/, "", value); sub(/\?.*/, "", value); print value; exit }' "$headers_file")"
+          printf 'Static page curl exit=%s HTTP status=%s content-type=%s\n' "$curl_status" "$http_status" "$content_type"
+          if [ -n "$redirect_path" ]; then printf 'Redirect path (query removed)=%s\n' "$redirect_path"; fi
+          printf '%s\n' 'Static page body, first 1500 bytes:'
+          head -c 1500 "$response_file"
+          printf '\n'
+          test "$curl_status" -eq 0
+          test "$http_status" = 200
+          case "$content_type" in text/html*) ;; *) exit 1;; esac
+          grep -F "Task Failure Timeline" "$response_file"
       - name: Verify documented response wrappers and field shapes
         run: |
           token="$(curl --fail --silent --show-error -X POST http://localhost:52773/api/admin/login -H 'Content-Type: application/json' --data '{"user":"_SYSTEM","password":"SYS"}' | jq -r '.result.access_token')"

@@ -1,0 +1,13 @@
+zn "%SYS"
+set properties("NameSpace")="USER"
+set properties("Description")="Ephemeral Task Failure Timeline static-page smoke test"
+set properties("Path")="/usr/irissys/csp/task-timeline"
+set properties("ServeFiles")=1
+set properties("Recurse")=1
+set properties("Enabled")=1
+set status=##class(Security.Applications).Create("/csp/task-timeline",.properties)
+if $system.Status.IsError(status) { write "CSP application creation failed: ",$system.Status.GetErrorText(status),! halt 1 }
+set application=##class(Security.Applications).%OpenId("/csp/task-timeline")
+if '$isobject(application) { write "CSP application lookup failed",! halt 1 }
+write "CSP mapping URL=",application.Name," physicalPath=",application.Path," serveFiles=",application.ServeFiles," recurse=",application.Recurse,!
+halt

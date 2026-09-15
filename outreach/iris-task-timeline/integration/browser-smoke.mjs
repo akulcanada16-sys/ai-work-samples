@@ -7,7 +7,7 @@ page.on("request", (request) => {
   const url = new URL(request.url());
   if (expected.has(url.pathname)) seen.set(url.pathname, request.headers());
 });
-await page.goto("http://localhost:52773/csp/samples/task-timeline/index.html");
+await page.goto("http://localhost:52773/csp/task-timeline/index.html");
 await page.locator("#user").fill("_SYSTEM");
 await page.locator("#password").fill("SYS");
 await page.locator("#signin button").click();
