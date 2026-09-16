@@ -1,0 +1,120 @@
+{
+  "sample_status": "AI-produced fictional demonstration; not client work",
+  "table": {
+    "name": "order_export",
+    "description": "Fictional order-export table defined by the supplied fictional brief.",
+    "source_mapping_evidence": "Fictional brief explicitly lists all nine columns and states the ID, date, money, currency, total, status, and null/blank rules.",
+    "fields": [
+      {
+        "name": "order_id",
+        "type": "string",
+        "required": true,
+        "nullable": false,
+        "empty_string_allowed": false,
+        "definition": "Opaque identifier for an order; no business meaning is inferred from its characters.",
+        "allowed_values": "Any non-empty opaque string supplied by the source export.",
+        "example": "ord_7K2mQ9",
+        "source_mapping_evidence": "Fictional brief: IDs are opaque strings; order_id is listed as a field."
+      },
+      {
+        "name": "ordered_on",
+        "type": "string",
+        "format": "date",
+        "required": true,
+        "nullable": false,
+        "empty_string_allowed": false,
+        "definition": "Store-local calendar date on which the order was placed, formatted as ISO YYYY-MM-DD.",
+        "allowed_values": "Valid ISO calendar date in YYYY-MM-DD form.",
+        "example": "2026-09-16",
+        "source_mapping_evidence": "Fictional brief: store local calendar date, ISO YYYY-MM-DD; timezone is unknown and open."
+      },
+      {
+        "name": "customer_ref",
+        "type": "string",
+        "required": true,
+        "nullable": true,
+        "empty_string_allowed": false,
+        "definition": "Opaque customer reference supplied by the export, when present.",
+        "allowed_values": "Any non-empty source-supplied string or JSON null.",
+        "example": "cust_A19x",
+        "source_mapping_evidence": "Fictional brief: customer_ref is listed and may be null."
+      },
+      {
+        "name": "currency",
+        "type": "string",
+        "required": true,
+        "nullable": false,
+        "empty_string_allowed": false,
+        "definition": "Currency code applying to the money fields in this export.",
+        "allowed_values": ["CAD"],
+        "example": "CAD",
+        "source_mapping_evidence": "Fictional brief: currency is CAD."
+      },
+      {
+        "name": "item_subtotal_minor",
+        "type": "integer",
+        "required": true,
+        "nullable": false,
+        "empty_string_allowed": false,
+        "definition": "Nonnegative item subtotal expressed in integer minor currency units.",
+        "allowed_values": "Integer greater than or equal to 0.",
+        "example": 4599,
+        "source_mapping_evidence": "Fictional brief: money values are nonnegative integer minor units."
+      },
+      {
+        "name": "shipping_minor",
+        "type": "integer",
+        "required": true,
+        "nullable": false,
+        "empty_string_allowed": false,
+        "definition": "Nonnegative shipping amount expressed in integer minor currency units.",
+        "allowed_values": "Integer greater than or equal to 0.",
+        "example": 800,
+        "source_mapping_evidence": "Fictional brief: money values are nonnegative integer minor units."
+      },
+      {
+        "name": "total_minor",
+        "type": "integer",
+        "required": true,
+        "nullable": false,
+        "empty_string_allowed": false,
+        "definition": "Order total expressed in integer minor currency units.",
+        "allowed_values": "Integer greater than or equal to 0 and equal to item_subtotal_minor + shipping_minor.",
+        "example": 5399,
+        "source_mapping_evidence": "Fictional brief: money values are nonnegative integer minor units and total=subtotal+shipping."
+      },
+      {
+        "name": "status",
+        "type": "string",
+        "required": true,
+        "nullable": false,
+        "empty_string_allowed": false,
+        "definition": "Current order lifecycle status supplied by the export.",
+        "allowed_values": ["new", "processing", "shipped", "cancelled"],
+        "example": "processing",
+        "source_mapping_evidence": "Fictional brief: status must be one of new, processing, shipped, or cancelled."
+      },
+      {
+        "name": "source_ref",
+        "type": "string",
+        "required": false,
+        "nullable": false,
+        "empty_string_allowed": true,
+        "definition": "Optional source-system reference; a blank string means the column is present with no reference value.",
+        "allowed_values": "Field may be absent; if present, an empty or non-empty source-supplied string.",
+        "example": "src_20260916_0042",
+        "source_mapping_evidence": "Fictional brief: source_ref may be blank or a string."
+      }
+    ]
+  },
+  "value_presence_rules": {
+    "missing_field": "The column is absent from a row or schema; this is permitted only for optional source_ref and is different from a present null or empty string.",
+    "null": "JSON null; permitted for customer_ref only under this fictional brief.",
+    "empty_string": "A present string with zero characters; permitted for source_ref only and not equivalent to null.",
+    "required": "Eight columns are required in the export schema. customer_ref is required but nullable; source_ref is optional."
+  },
+  "open_questions": [
+    "What timezone defines the store's local calendar date for ordered_on?",
+    "Are cancelled orders included in revenue reporting, or excluded by a separate business rule?"
+  ]
+}
