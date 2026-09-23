@@ -1,0 +1,7 @@
+devpost/learner-profile.md
+node_modules/
+.agents/
+agent/
+devpost/*.mp4
+devpost/*.webm
+devpost/*-review-sheet.png
