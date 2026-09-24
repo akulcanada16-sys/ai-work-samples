@@ -1,5 +1,7 @@
 devpost/learner-profile.md
 node_modules/
+.vercel/
+dist/
 .agents/
 agent/
 devpost/*.mp4
