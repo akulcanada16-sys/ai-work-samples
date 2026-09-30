@@ -1,0 +1,1 @@
+{"name":"dialguard-browser-verification","private":true,"version":"0.1.0","scripts":{"test:browser":"node scripts/browser_smoke.cjs"},"devDependencies":{"playwright":"1.62.1"}}

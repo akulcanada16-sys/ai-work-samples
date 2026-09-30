@@ -1,0 +1,55 @@
+name: DialGuard MVP
+on:
+  push:
+    paths: ['dialguard/**', '.github/workflows/dialguard.yml']
+  pull_request:
+    paths: ['dialguard/**', '.github/workflows/dialguard.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: dialguard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: dialguard/requirements-dev.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dialguard/package-lock.json
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+      - run: python scripts/evaluate.py
+      - run: python scripts/evaluate_photo.py
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Verify live HTTP and browser flows
+        run: |
+          python -m dialguard.server > /tmp/dialguard-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          python - <<'PY'
+          import urllib.request,time
+          for i in range(50):
+              try:
+                  urllib.request.urlopen('http://127.0.0.1:8080/health',timeout=1)
+                  break
+              except Exception:
+                  time.sleep(.1)
+          else:
+              raise RuntimeError('Server did not start')
+          PY
+          python scripts/smoke_http.py
+          npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dialguard-evidence
+          path: dialguard/evidence/

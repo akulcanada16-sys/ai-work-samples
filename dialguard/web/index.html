@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DialGuard · Inspection desk</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body><header><a class="brand" href="/">◉ <span>DialGuard</span></a><span class="pill">Inspection prototype</span></header>
+<main><div class="intro"><p class="eyebrow">SEE THE READING. KEEP THE EVIDENCE.</p><h1>A second look at<br>your analog gauge.</h1><p>Read a calibrated dial from a photo. Get a visible needle estimate,<br class="desktop"> a review prompt, or a specific reason to take another photo.</p></div>
+<div class="workspace"><section class="panel"><div class="section-title"><h2>01 / Capture & calibrate</h2><span id="image-label">Generated sample</span></div>
+<div class="image-wrap"><canvas id="image" aria-label="Gauge image. Use the numeric center and radius fields as an alternative to clicking." role="img"></canvas><div id="click-hint">Straight-on photo · dark needle · light dial</div></div>
+<div class="toolbar"><label class="button primary">Upload photo<input type="file" id="upload" accept="image/png,image/jpeg" hidden></label><button id="center">Set center</button><button id="radius">Set rim</button></div>
+<p class="help">Calibrate once per gauge setup. Click the needle hub, then a point on the outer rim. Tilted, nonlinear, multi-needle and reflective dials are outside this prototype’s scope.</p>
+<div class="fields"><label>Center X (0–1)<input id="cx" type="number" min="0" max="1" step=".01" value=".5"></label><label>Center Y (0–1)<input id="cy" type="number" min="0" max="1" step=".01" value=".5"></label><label>Radius / short side<input id="radius-value" type="number" min=".08" max=".48" step=".01" value=".4"></label></div>
+<div class="fields"><label>Scale minimum<input id="minimum" type="number" value="0"></label><label>Scale maximum<input id="maximum" type="number" value="100"></label><label>Unit<input id="unit" maxlength="24" value="units"></label></div>
+<div class="fields"><label>Start angle °<input id="start" type="number" min="0" max="359.99" value="135"></label><label>Clockwise sweep °<input id="sweep" type="number" min="1" max="330" value="270"></label><label>Review at / above<input id="threshold" type="number" value="80"></label></div>
+<p class="help">Angles: right = 0°, down = 90°, left = 180°, up = 270°. Values increase clockwise. The sample runs from bottom-left through the top to bottom-right.</p>
+<label class="access">Demo access code (required on AWS)<input id="token" type="password" autocomplete="off" placeholder="Provided by the demo owner"></label>
+<button id="inspect" class="button primary wide">Inspect this dial →</button><p class="help">Uploads are processed by this server. Raw images are not stored. On AWS, derived readings and traces expire after seven days.</p>
+</section>
+<section class="panel results" aria-live="polite"><div class="section-title"><h2>02 / Reading & evidence</h2><span id="runtime">Checking engine…</span></div>
+<div id="state"><span id="status" class="status idle">READY TO INSPECT</span><div id="reading">—</div><p id="message">The demo starts with a generated dial reading 62. It is a software fixture, not a photograph.</p></div>
+<img id="annotated" alt="Annotated inspection showing calibrated rim and detected needle" hidden>
+<div id="metrics" hidden><div><span>Ray support</span><strong id="support"></strong></div><div><span>Processing time</span><strong id="latency"></strong></div></div>
+<details id="trace-details" hidden><summary>View inspection decisions</summary><pre id="trace"></pre></details>
+<button id="download" hidden>Download evidence JSON</button>
+<div class="sample-box"><p class="eyebrow">TEST THE DECISIONS</p><p>Try a reading, a review threshold, and a failed capture.</p><div class="samples"><button data-sample="clean">Clear · 62</button><button data-sample="high">High · 90</button><button data-sample="blur">Blurred</button><button data-sample="ambiguous">Two needles</button><button data-sample="missing">No needle</button><button data-sample="dim">Too dark</button></div></div>
+<p class="boundary">Decision support only. Always confirm important readings independently. DialGuard does not certify equipment, diagnose faults, or control machinery.</p>
+</section></div><footer>Built with OpenCV 5 · bounded visual inspection · no model training required</footer></main></body></html>
