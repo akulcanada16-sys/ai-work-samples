@@ -1,0 +1,72 @@
+{
+  "status": "RETAKE",
+  "action": "request_new_photo",
+  "reading": null,
+  "unit": "kPa",
+  "angle_deg": 77.09999999999982,
+  "reasons": [
+    "Needle is outside the configured scale: verify calibration."
+  ],
+  "trace": [
+    {
+      "tool": "quality",
+      "sharpness": 2282.86,
+      "mean_brightness": 210.33
+    },
+    {
+      "tool": "hough_baseline",
+      "angle_deg": 79.14358665193775
+    },
+    {
+      "tool": "polar_scan",
+      "angle_deg": 77.0,
+      "support": 1.0,
+      "peak_margin": 0.7075
+    },
+    {
+      "tool": "verify_candidate",
+      "window_center_deg": 77.0,
+      "angles_deg": [
+        76.99999999999983,
+        77.19999999999982
+      ],
+      "contrast_thresholds": [
+        30,
+        50
+      ]
+    },
+    {
+      "tool": "decision",
+      "status": "RETAKE",
+      "action": "request_new_photo"
+    }
+  ],
+  "evidence_score": 1.0,
+  "peak_margin": 0.7075,
+  "baseline_angle_deg": 79.14358665193775,
+  "opencv_version": "5.0.0",
+  "latency_ms": 116.17,
+  "kind": "exploratory_photo_not_ground_truth_validation",
+  "calibration": {
+    "cx": 0.6515625,
+    "cy": 0.5291666666666667,
+    "radius": 0.21875,
+    "start_deg": 90,
+    "sweep_deg": 270,
+    "minimum": 0,
+    "maximum": 400,
+    "unit": "kPa",
+    "review_above": null
+  },
+  "truth": null,
+  "source": "https://commons.wikimedia.org/wiki/File:Air_pressure_gauge.jpg",
+  "author": "Tokino",
+  "license": "Public domain (PD-self)",
+  "input_sha256": "388ec0d53a2b512bfc21ac959dc64bb765979df40f6c4d95eddeb1301f1d5cb8",
+  "limitations": [
+    "Manually estimated exploratory calibration, not verified instrument calibration.",
+    "Tilted photo outside supported frontal-image scope.",
+    "Rejected because estimate falls outside this configured scale, not because perspective was automatically detected.",
+    "No reference reading or numeric accuracy claim."
+  ]
+}

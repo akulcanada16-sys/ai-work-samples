@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: DialGuard OpenCV 5 inspection with a protected demo and short-lived derived evidence
+Parameters:
+  DemoToken:
+    Type: String
+    NoEcho: true
+    MinLength: 24
+    AllowedPattern: '[A-Za-z0-9_-]+'
+Resources:
+  EvidenceBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireDerivedEvidence
+            Status: Enabled
+            ExpirationInDays: 7
+  Inspector:
+    Type: AWS::Serverless::Function
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: .
+      DockerTag: dialguard-opencv5
+    Properties:
+      PackageType: Image
+      Architectures: [x86_64]
+      MemorySize: 1024
+      Timeout: 20
+      ReservedConcurrentExecutions: 2
+      Environment:
+        Variables:
+          DIALGUARD_TOKEN: !Ref DemoToken
+          EVIDENCE_BUCKET: !Ref EvidenceBucket
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: s3:PutObject
+              Resource: !Sub '${EvidenceBucket.Arn}/inspections/*'
+      FunctionUrlConfig:
+        AuthType: NONE
+  InspectorLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Inspector}'
+      RetentionInDays: 7
+Outputs:
+  DemoUrl:
+    Description: Share this URL with judges and share DemoToken separately
+    Value: !GetAtt InspectorUrl.FunctionUrl
+  DerivedEvidenceBucket:
+    Value: !Ref EvidenceBucket
